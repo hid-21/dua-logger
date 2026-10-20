@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dua Log</title>
+<meta name="theme-color" content="#064e3b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dua Log">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" href="/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--tx:#10231c;--mut:#6b7a73;--ln:#e4e0d6;--g:#047857;--gold:#d4a017;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07130f;--card:#10211b;--tx:#ecf3ef;--mut:#8ea39a;--ln:#1d3329;--g:#34d399}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:#064e3b;z-index:50}
+.font-arabic{font-family:'Amiri','Geeza Pro',serif;direction:rtl;line-height:2.2;font-size:1.65rem;text-align:right}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:22px}
+.mut{color:var(--mut)}
+button{font:inherit;color:inherit;transition:transform .12s}
+button:active{transform:scale(.95)}
+.ring{transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)}
+#sheet{transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1)}
+#sheet.open{transform:none}
+input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--ln);border-radius:14px;padding:12px;font-size:16px;color:var(--tx);box-sizing:border-box}
+</style>
+</head>
+<body>
+<div class="max-w-md mx-auto px-4 pb-28 pt-3" id="app"></div>
+<div id="scrim" class="fixed inset-0 bg-black/50 backdrop-blur-md hidden z-40"></div>
+<div id="sheet" class="fixed inset-x-0 bottom-0 z-50 max-w-md mx-auto card rounded-b-none p-5" style="max-height:92%;overflow:auto;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)">
+  <div class="flex justify-between items-center mb-3"><h2 class="text-lg font-bold">Add custom dua</h2><button id="x" class="mut text-2xl px-2">✕</button></div>
+  <div class="space-y-3">
+    <input id="f-title" placeholder="Title">
+    <select id="f-sess"><option value="morning">Morning</option><option value="evening">Evening</option><option value="night">Night</option></select>
+    <textarea id="f-ar" rows="3" dir="rtl" placeholder="Arabic text" style="font-family:Amiri,serif;font-size:20px"></textarea>
+    <textarea id="f-en" rows="2" placeholder="Translation"></textarea>
+    <input id="f-n" type="number" min="1" value="1" inputmode="numeric" placeholder="Target count">
+    <button id="save" class="w-full py-3.5 rounded-2xl text-white font-semibold" style="background:#047857">Save dua</button>
+  </div>
+</div>
+<script>
+const S=[["morning","Morning","Al-Sabah","☀️"],["evening","Evening","Al-Masaa","🌆"],["night","Night","Before sleep","🌙"]];
+const T={M:{A:"أَصْبَحْنَا",X:"أَمْسَيْنَا",B:"أَصْبَحَ",H:"أَصْبَحْتُ",D:"هَذَا الْيَوْمِ",E:"هُ",Y:"فِيهِ",t:"morning",u:"evening",T:"Morning",d:"day"},E:{A:"أَمْسَيْنَا",X:"أَصْبَحْنَا",B:"أَمْسَى",H:"أَمْسَيْتُ",D:"هَذِهِ اللَّيْلَةِ",E:"هَا",Y:"فِيهَا",t:"evening",u:"morning",T:"Evening",d:"night"}};
+const SN={M:"morning",E:"evening",N:"night"};
+const AK="ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُۥ مَا فِى ٱلسَّمَٰوَٰتِ وَمَا فِى ٱلْأَرْضِ ۗ مَن ذَا ٱلَّذِى يَشْفَعُ عِندَهُۥٓ إِلَّا بِإِذْنِهِۦ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَىْءٍ مِّنْ عِلْمِهِۦٓ إِلَّا بِمَا شَآءَ ۚ وَسِعَ كُرْسِيُّهُ ٱلسَّمَٰوَٰتِ وَٱلْأَرْضَ ۖ وَلَا يَـُٔودُهُۥ حِفْظُهُمَا ۚ وَهُوَ ٱلْعَلِىُّ ٱلْعَظِيمُ";
+const R=[
+["MEN","Ayatul Kursi",1,AK,"Allah! There is no deity except Him, the Ever-Living, the Sustainer of all existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and the earth. Who can intercede with Him except by His permission? He knows what is before them and what will be after them, and they encompass nothing of His knowledge except what He wills. His Kursi extends over the heavens and the earth, and their preservation tires Him not. He is the Most High, the Most Great. (2:255)","Allahu la ilaha illa huwal-Hayyul-Qayyum..."],
+["MEN","Surah Al-Ikhlas",3,"قُلْ هُوَ ٱللَّهُ أَحَدٌ ۝ ٱللَّهُ ٱلصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ","Say, He is Allah, One. Allah, the Eternal Refuge. He neither begets nor is born, nor is there to Him any equivalent.","Qul huwallahu ahad. Allahus-samad. Lam yalid wa lam yulad. Wa lam yakun lahu kufuwan ahad."],
+["MEN","Surah Al-Falaq",3,"قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ ۝ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۝ وَمِن شَرِّ ٱلنَّفَّٰثَٰتِ فِى ٱلْعُقَدِ ۝ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ","Say, I seek refuge in the Lord of daybreak, from the evil of what He created, from the evil of darkness when it settles, from the blowers in knots, and from the evil of an envier when he envies.","Qul a'udhu bi rabbil-falaq. Min sharri ma khalaq. Wa min sharri ghasiqin idha waqab. Wa min sharrin-naffathati fil-'uqad. Wa min sharri hasidin idha hasad."],
+["MEN","Surah An-Nas",3,"قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ ۝ مَلِكِ ٱلنَّاسِ ۝ إِلَٰهِ ٱلنَّاسِ ۝ مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ ۝ ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ ۝ مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ","Say, I seek refuge in the Lord of mankind, the Sovereign of mankind, the God of mankind, from the evil of the retreating whisperer who whispers into the breasts of mankind, from among jinn and mankind.","Qul a'udhu bi rabbin-nas. Malikin-nas. Ilahin-nas. Min sharril-waswasil-khannas. Alladhi yuwaswisu fi sudurin-nas. Minal-jinnati wan-nas."],
+["ME","@T: Dominion belongs to Allah",1,"@A وَ@B الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ. رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي @D وَخَيْرَ مَا بَعْدَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي @D وَشَرِّ مَا بَعْدَهُ. رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ، رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ","We have entered the @t and the dominion belongs to Allah. All praise is for Allah. None has the right to be worshipped but Allah alone, without partner. To Him belongs the dominion and all praise, and He has power over all things. My Lord, I ask You for the good of this @d and what follows it, and seek refuge in You from the evil of this @d and what follows it. My Lord, I seek refuge in You from laziness and the evil of old age, and from the punishment of the Fire and the punishment of the grave."],
+["ME","By You we enter the @t",1,"اللَّهُمَّ بِكَ @A وَبِكَ @X وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ","O Allah, by You we have entered the @t, and by You we have entered the @u. By You we live, by You we die, and to You is the resurrection."],
+["ME","Sayyidul Istighfar",1,"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ","O Allah, You are my Lord, none has the right to be worshipped except You. You created me and I am Your servant, and I keep Your covenant and promise as best I can. I seek refuge in You from the evil I have done. I acknowledge Your blessings upon me and I confess my sins, so forgive me, for none forgives sins except You."],
+["ME","Calling Allah and the angels to witness",4,"اللَّهُمَّ إِنِّي @H أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ أَنَّكَ أَنْتَ اللَّهُ لَا إِلَهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُولُكَ","O Allah, I have entered the @t and call upon You, the bearers of Your Throne, Your angels and all Your creation to witness that You are Allah, none has the right to be worshipped except You alone without partner, and that Muhammad is Your servant and Messenger."],
+["ME","Blessing from You alone",1,"اللَّهُمَّ مَا @B بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ، فَلَكَ الْحَمْدُ وَلَكَ الشُّكْرُ","O Allah, whatever blessing has come to me or to any of Your creation this @t is from You alone, without partner. So for You is all praise and all thanks."],
+["ME","Health in body, hearing, sight",3,"اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ. اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، لَا إِلَهَ إِلَّا أَنْتَ","O Allah, grant me health in my body, hearing and sight. There is no god but You. O Allah, I seek refuge in You from disbelief and poverty, and from the punishment of the grave. There is no god but You."],
+["ME","Hasbiyallah",7,"حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ","Allah is sufficient for me; there is no god but Him. I have placed my trust in Him, and He is the Lord of the Mighty Throne."],
+["ME","Forgiveness and well-being",1,"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ وَأَهْلِي وَمَالِي، اللَّهُمَّ اسْتُرْ عَوْرَاتِي وَآمِنْ رَوْعَاتِي، وَاحْفَظْنِي مِنْ بَيْنِ يَدَيَّ وَمِنْ خَلْفِي وَعَنْ يَمِينِي وَعَنْ شِمَالِي وَمِنْ فَوْقِي، وَأَعُوذُ بِعَظَمَتِكَ أَنْ أُغْتَالَ مِنْ تَحْتِي","O Allah, I ask You for forgiveness and well-being in this world and the Hereafter, in my religion, worldly affairs, family and wealth. O Allah, conceal my faults and calm my fears. Protect me from in front, behind, my right, my left and above me. I seek refuge in Your greatness from being taken unaware from beneath me."],
+["MEN","Knower of the unseen and the seen",1,"اللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ فَاطِرَ السَّمَاوَاتِ وَالْأَرْضِ، رَبَّ كُلِّ شَيْءٍ وَمَلِيكَهُ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ، وَأَنْ أَقْتَرِفَ عَلَى نَفْسِي سُوءًا أَوْ أَجُرَّهُ إِلَى مُسْلِمٍ","O Allah, Knower of the unseen and the seen, Creator of the heavens and the earth, Lord and Sovereign of all things, I bear witness that there is no deity worthy of worship but You. I seek refuge in You from the evil of my own self, from the evil of Satan and his association with Allah, and from committing wrong against myself or bringing it upon another Muslim. (Abu Dawud 5067, Tirmidhi 3392)"],
+["ME","Bismillahil-ladhi la yadurru",3,"بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ","In the name of Allah, with whose name nothing on earth or in the heavens can cause harm, and He is the All-Hearing, All-Knowing.","Bismillahil-ladhi la yadurru ma'asmihi shay'un fil-ardi wa la fis-sama'i wa huwas-Sami'ul-'Alim."],
+["ME","Raditu Billahi Rabba",3,"رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ صلى الله عليه وسلم نَبِيًّا","I am pleased with Allah as my Lord, with Islam as my religion, and with Muhammad (peace be upon him) as my Prophet.","Raditu billahi rabba, wa bil-Islami dina, wa bi Muhammadin nabiyya."],
+["ME","Ya Hayyu Ya Qayyumu",1,"يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ","O Ever-Living, O Sustainer, by Your mercy I seek relief. Rectify all of my affairs and do not leave me to myself, even for the blink of an eye.","Ya Hayyu ya Qayyumu bi rahmatika astaghith, aslih li sha'ni kullahu wa la takilni ila nafsi tarfata 'ayn."],
+["ME","Good of this @d: its triumph, light, guidance",1,"@A وَ@B الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ @D: فَتْحَ@E وَنَصْرَ@E وَنُورَ@E وَبَرَكَتَ@E وَهُدَا@E، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا @Y وَشَرِّ مَا بَعْدَهُ","We have entered the @t and all dominion belongs to Allah, Lord of all worlds. O Allah, I ask You for the good of this @d: its opening, support, light, blessing and guidance. I seek refuge in You from the evil within it and the evil after it."],
+["ME","@T upon the fitrah of Islam",1,"@A عَلَى فِطْرَةِ الْإِسْلَامِ، وَعَلَى كَلِمَةِ الْإِخْلَاصِ، وَعَلَى دِينِ نَبِيِّنَا مُحَمَّدٍ صلى الله عليه وسلم، وَعَلَى مِلَّةِ أَبِينَا إِبْرَاهِيمَ حَنِيفًا مُسْلِمًا وَمَا كَانَ مِنَ الْمُشْرِكِينَ","We have entered the @t upon the fitrah of Islam, the word of sincerity, the religion of our Prophet Muhammad (peace be upon him), and the creed of our father Ibrahim, a true monotheist and Muslim, who was not of those who associate partners with Allah."],
+["ME","Subhanallahi wa bihamdihi",1,"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ","Glory is to Allah and all praise is due to Him. Glory is to Allah, the Most Great.","Subhanallahi wa bihamdihi, subhanallahil-'Azim."],
+["ME","La ilaha illallah wahdahu",1,"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ","There is no god but Allah alone, without partner. To Him belongs the kingdom and all praise, and He has power over all things."],
+["ME","Subhanallah: number of His creation",3,"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ","Glory is to Allah and all praise is due to Him, as many times as the number of His creation, as much as pleases Him, as the weight of His Throne, and as the ink required to write His words."],
+["ME","Beneficial knowledge",1,"اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا","O Allah, I ask You for beneficial knowledge, good and lawful sustenance, and accepted deeds."],
+["ME","Istighfar",1,"أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ","I seek forgiveness from Allah and turn to Him in repentance.","Astaghfirullah wa atubu ilayh."],
+["ME","Perfect words of Allah",1,"أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ","I seek refuge in the perfect words of Allah from the evil of what He has created."],
+["ME","Salawat on the Prophet",1,"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ","O Allah, send blessings and peace upon our Prophet Muhammad."],
+["N","Last 2 verses of Surah Al-Baqarah",1,"آمَنَ الرَّسُولُ بِمَا أُنزِلَ إِلَيْهِ مِن رَّبِّهِ وَالْمُؤْمِنُونَ ۚ كُلٌّ آمَنَ بِاللَّهِ وَمَلَائِكَتِهِ وَكُتُبِهِ وَرُسُلِهِ لَا نُفَرِّقُ بَيْنَ أَحَدٍ مِّن رُّسُلِهِ ۚ وَقَالُوا سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ ۝ لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا ۚ لَهَا مَا كَسَبَتْ وَعَلَيْهَا مَا اكْتَسَبَتْ ۗ رَبَّنَا لَا تُؤَاخِذْنَا إِن نَّسِينَا أَوْ أَخْطَأْنَا ۚ رَبَّنَا وَلَا تَحْمِلْ عَلَيْنَا إِصْرًا كَمَا حَمَلْتَهُ عَلَى الَّذِينَ مِن قَبْلِنَا ۚ رَبَّنَا وَلَا تُحَمِّلْنَا مَا لَا طَاقَةَ لَنَا بِهِ ۖ وَاعْفُ عَنَّا وَاغْفِرْ لَنَا وَارْحَمْنَا ۚ أَنتَ مَوْلَانَا فَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ","285: The Messenger has believed in what was revealed to him from his Lord, and so have the believers. All have believed in Allah, His angels, His books and His messengers: We make no distinction between any of His messengers. They say, We hear and obey. Your forgiveness, our Lord, and to You is the final destination. 286: Allah does not burden a soul beyond what it can bear. It will have what it has gained and bear what it has earned. Our Lord, do not blame us if we forget or make a mistake. Our Lord, do not lay on us a burden like that You laid on those before us. Our Lord, do not burden us with what we have no ability to bear. Pardon us, forgive us and have mercy on us. You are our protector, so give us victory over the disbelieving people."],
+["N","Bismika Rabbi wada'tu janbi",1,"بِاسْمِكَ رَبِّي وَضَعْتُ جَنْبِي وَبِكَ أَرْفَعُهُ، فَإِنْ أَمْسَكْتَ نَفْسِي فَاغْفِرْ لَهَا، وَإِنْ أَرْسَلْتَهَا فَاحْفَظْهَا بِمَا تَحْفَظُ بِهِ عِبَادَكَ الصَّالِحِينَ","In Your name, my Lord, I lie down, and in Your name I rise. If You take my soul, then forgive it, and if You return it, protect it as You protect Your righteous servants.","Bismika rabbi wada'tu janbi wa bika arfa'uh..."],
+["N","Allahumma aslamtu nafsi ilayk",1,"اللَّهُمَّ إِنِّي أَسْلَمْتُ نَفْسِي إِلَيْكَ، وَفَوَّضْتُ أَمْرِي إِلَيْكَ، وَوَجَّهْتُ وَجْهِي إِلَيْكَ، وَأَلْجَأْتُ ظَهْرِي إِلَيْكَ، رَغْبَةً وَرَهْبَةً إِلَيْكَ، لَا مَلْجَأَ وَلَا مَنْجَا مِنْكَ إِلَّا إِلَيْكَ، آمَنْتُ بِكِتَابِكَ الَّذِي أَنْزَلْتَ، وَبِنَبِيِّكَ الَّذِي أَرْسَلْتَ","O Allah, I have submitted myself to You, entrusted my affairs to You, directed my face to You and placed my reliance upon You, out of desire for You and fear of You. There is no refuge and no escape from You except to You. I believe in Your Book that You revealed and in Your Prophet whom You sent."],
+["N","Allahumma innaka khalaqta nafsi",1,"اللَّهُمَّ إِنَّكَ خَلَقْتَ نَفْسِي وَأَنْتَ تَوَفَّاهَا، لَكَ مَمَاتُهَا وَمَحْيَاهَا، إِنْ أَحْيَيْتَهَا فَاحْفَظْهَا، وَإِنْ أَمَتَّهَا فَاغْفِرْ لَهَا، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ","O Allah, You created my soul and You will take it back. To You belong its death and life. If You keep it alive, protect it, and if You take it back, forgive it. O Allah, I ask You for well-being."],
+["N","Protection on the Day of gathering",1,"اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَجْمَعُ عِبَادَكَ لِيَوْمٍ لَا رَيْبَ فِيهِ، إِنَّ اللَّهَ لَا يُخْلِفُ الْمِيعَادَ","O Allah, protect me from Your punishment on the Day You gather Your servants for a Day of which there is no doubt. Indeed, Allah does not fail in His promise."],
+["N","Bismika Allahumma amutu wa ahya",1,"بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا","In Your name, O Allah, I die and I live. (Bukhari 6324)"],
+["N","Tasbih: SubhanAllah",33,"سُبْحَانَ اللَّهِ","Glory be to Allah","SubhanAllah"],
+["N","Tasbih: Alhamdulillah",33,"الْحَمْدُ لِلَّهِ","Praise be to Allah","Alhamdulillah"],
+["N","Tasbih: Allahu Akbar",34,"اللَّهُ أَكْبَرُ","Allah is the Greatest","Allahu Akbar"],
+["N","Allahumma Rabbas-samawat",1,"اللَّهُمَّ رَبَّ السَّمَاوَاتِ وَرَبَّ الْأَرْضِ وَرَبَّ الْعَرْشِ الْعَظِيمِ، رَبَّنَا وَرَبَّ كُلِّ شَيْءٍ، فَالِقَ الْحَبِّ وَالنَّوَى، وَمُنْزِلَ التَّوْرَاةِ وَالْإِنْجِيلِ وَالْفُرْقَانِ، أَعُوذُ بِكَ مِنْ شَرِّ كُلِّ شَيْءٍ أَنْتَ آخِذٌ بِنَاصِيَتِهِ، اللَّهُمَّ أَنْتَ الْأَوَّلُ فَلَيْسَ قَبْلَكَ شَيْءٌ، وَأَنْتَ الْآخِرُ فَلَيْسَ بَعْدَكَ شَيْءٌ، وَأَنْتَ الظَّاهِرُ فَلَيْسَ فَوْقَكَ شَيْءٌ، وَأَنْتَ الْبَاطِنُ فَلَيْسَ دُونَكَ شَيْءٌ، اقْضِ عَنَّا الدَّيْنَ وَأَغْنِنَا مِنَ الْفَقْرِ","O Allah, Lord of the heavens, the earth and the Great Throne, our Lord and Lord of everything, Splitter of the grain and date seed, Revealer of the Torah, the Gospel and the Criterion, I seek refuge in You from the evil of everything You control. You are the First, nothing before You; the Last, nothing after You; the Most High, nothing above You; the Most Near, nothing beyond You. Settle our debt and spare us from poverty. (Muslim 2713)"],
+["N","Alhamdulillahil-ladhi at'amana",1,"الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَكَفَانَا وَآوَانَا، فَكَمْ مِمَّنْ لَا كَافِيَ لَهُ وَلَا مُؤْوِيَ","All praise is for Allah who has fed us, given us drink, sufficed us and sheltered us, for how many have no one to suffice or shelter them. (Muslim 2715)"],
+["N","Surah Al-Mulk (all 30 verses)",1,"تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ ۝ الَّذِي خَلَقَ الْمَوْتَ وَالْحَيَاةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًا ۚ وَهُوَ الْعَزِيزُ الْغَفُورُ ۝ الَّذِي خَلَقَ سَبْعَ سَمَاوَاتٍ طِبَاقًا ۖ مَّا تَرَىٰ فِي خَلْقِ الرَّحْمَٰنِ مِن تَفَاوُتٍ ۖ فَارْجِعِ الْبَصَرَ هَلْ تَرَىٰ مِن فُطُورٍ ۝ ثُمَّ ارْجِعِ الْبَصَرَ كَرَّتَيْنِ يَنقَلِبْ إِلَيْكَ الْبَصَرُ خَاسِئًا وَهُوَ حَسِيرٌ ۝ وَلَقَدْ زَيَّنَّا السَّمَاءَ الدُّنْيَا بِمَصَابِيحَ وَجَعَلْنَاهَا رُجُومًا لِّلشَّيَاطِينِ ۖ وَأَعْتَدْنَا لَهُمْ عَذَابَ السَّعِيرِ ۝ وَلِلَّذِينَ كَفَرُوا بِرَبِّهِمْ عَذَابُ جَهَنَّمَ ۖ وَبِئْسَ الْمَصِيرُ ۝ إِذَا أُلْقُوا فِيهَا سَمِعُوا لَهَا شَهِيقًا وَهِيَ تَفُورُ ۝ تَكَادُ تَمَيَّزُ مِنَ الْغَيْظِ ۖ كُلَّمَا أُلْقِيَ فِيهَا فَوْجٌ سَأَلَهُمْ خَزَنَتُهَا أَلَمْ يَأْتِكُمْ نَذِيرٌ ۝ قَالُوا بَلَىٰ قَدْ جَاءَنَا نَذِيرٌ فَكَذَّبْنَا وَقُلْنَا مَا نَزَّلَ اللَّهُ مِن شَيْءٍ إِنْ أَنتُمْ إِلَّا فِي ضَلَالٍ كَبِيرٍ ۝ وَقَالُوا لَوْ كُنَّا نَسْمَعُ أَوْ نَعْقِلُ مَا كُنَّا فِي أَصْحَابِ السَّعِيرِ ۝ فَاعْتَرَفُوا بِذَنبِهِمْ فَسُحْقًا لِّأَصْحَابِ السَّعِيرِ ۝ إِنَّ الَّذِينَ يَخْشَوْنَ رَبَّهُم بِالْغَيْبِ لَهُم مَّغْفِرَةٌ وَأَجْرٌ كَبِيرٌ ۝ وَأَسِرُّوا قَوْلَكُمْ أَوِ اجْهَرُوا بِهِ ۖ إِنَّهُ عَلِيمٌ بِذَاتِ الصُّدُورِ ۝ أَلَا يَعْلَمُ مَنْ خَلَقَ وَهُوَ اللَّطِيفُ الْخَبِيرُ ۝ هُوَ الَّذِي جَعَلَ لَكُمُ الْأَرْضَ ذَلُولًا فَامْشُوا فِي مَنَاكِبِهَا وَكُلُوا مِن رِّزْقِهِ ۖ وَإِلَيْهِ النُّشُورُ ۝ أَأَمِنتُم مَّن فِي السَّمَاءِ أَن يَخْسِفَ بِكُمُ الْأَرْضَ فَإِذَا هِيَ تَمُورُ ۝ أَمْ أَمِنتُم مَّن فِي السَّمَاءِ أَن يُرْسِلَ عَلَيْكُمْ حَاصِبًا ۖ فَسَتَعْلَمُونَ كَيْفَ نَذِيرِ ۝ وَلَقَدْ كَذَّبَ الَّذِينَ مِن قَبْلِهِمْ فَكَيْفَ كَانَ نَكِيرِ ۝ أَوَلَمْ يَرَوْا إِلَى الطَّيْرِ فَوْقَهُمْ صَافَّاتٍ وَيَقْبِضْنَ ۚ مَا يُمْسِكُهُنَّ إِلَّا الرَّحْمَٰنُ ۚ إِنَّهُ بِكُلِّ شَيْءٍ بَصِيرٌ ۝ أَمَّنْ هَٰذَا الَّذِي هُوَ جُندٌ لَّكُمْ يَنصُرُكُم مِّن دُونِ الرَّحْمَٰنِ ۚ إِنِ الْكَافِرُونَ إِلَّا فِي غُرُورٍ ۝ أَمَّنْ هَٰذَا الَّذِي يَرْزُقُكُمْ إِنْ أَمْسَكَ رِزْقَهُ ۚ بَل لَّجُّوا فِي عُتُوٍّ وَنُفُورٍ ۝ أَفَمَن يَمْشِي مُكِبًّا عَلَىٰ وَجْهِهِ أَهْدَىٰ أَمَّن يَمْشِي سَوِيًّا عَلَىٰ صِرَاطٍ مُّسْتَقِيمٍ ۝ قُلْ هُوَ الَّذِي أَنشَأَكُمْ وَجَعَلَ لَكُمُ السَّمْعَ وَالْأَبْصَارَ وَالْأَفْئِدَةَ ۖ قَلِيلًا مَّا تَشْكُرُونَ ۝ قُلْ هُوَ الَّذِي ذَرَأَكُمْ فِي الْأَرْضِ وَإِلَيْهِ تُحْشَرُونَ ۝ وَيَقُولُونَ مَتَىٰ هَٰذَا الْوَعْدُ إِن كُنتُمْ صَادِقِينَ ۝ قُلْ إِنَّمَا الْعِلْمُ عِندَ اللَّهِ وَإِنَّمَا أَنَا نَذِيرٌ مُّبِينٌ ۝ فَلَمَّا رَأَوْهُ زُلْفَةً سِيئَتْ وُجُوهُ الَّذِينَ كَفَرُوا وَقِيلَ هَٰذَا الَّذِي كُنتُم بِهِ تَدَّعُونَ ۝ قُلْ أَرَأَيْتُمْ إِنْ أَهْلَكَنِيَ اللَّهُ وَمَن مَّعِيَ أَوْ رَحِمَنَا فَمَن يُجِيرُ الْكَافِرِينَ مِنْ عَذَابٍ أَلِيمٍ ۝ قُلْ هُوَ الرَّحْمَٰنُ آمَنَّا بِهِ وَعَلَيْهِ تَوَكَّلْنَا ۖ فَسَتَعْلَمُونَ مَنْ هُوَ فِي ضَلَالٍ مُّبِينٍ ۝ قُلْ أَرَأَيْتُمْ إِنْ أَصْبَحَ مَاؤُكُمْ غَوْرًا فَمَن يَأْتِيكُم بِمَاءٍ مَّعِينٍ","The Prophet (peace be upon him) said: There is a surah of thirty verses that will intercede for a man until he is forgiven: Tabarak (Al-Mulk). (Tirmidhi, Abu Dawud). He also said it protects from the punishment of the grave. (Tirmidhi, Nasai)"]
+];
+const fill=(s,m)=>s&&s.replace(/@([AXBHDEYtTdu])/g,(_,c)=>m[c]);
+const D=[];
+R.forEach(([ss,t,n,ar,en,tr],i)=>[...ss].forEach(c=>{const m=T[c]||{};D.push({id:"p"+i+c,s:SN[c],t:fill(t,m),n,ar:fill(ar,m),en:fill(en,m),tr})}));
+const K="dualog.v1",TODAY=new Date();
+let st={custom:[],logs:{},tr:false};
+try{const r=localStorage.getItem(K);if(r)st=Object.assign(st,JSON.parse(r))}catch(e){}
+st.custom.forEach(c=>{if(c.s==="day")c.s="evening"});
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(st))}catch(e){}};
+const key=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const all=()=>D.concat(st.custom);
+let sel=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()),tab=TODAY.getHours()<12?"morning":TODAY.getHours()<19?"evening":"night",open={};
+const cnt=(k,id)=>(st.logs[k]||{})[id]||0;
+function prog(k,sess){const l=all().filter(d=>!sess||d.s===sess);const done=l.filter(d=>cnt(k,d.id)>=d.n).length;const any=l.some(d=>cnt(k,d.id)>0);return{done,total:l.length,any,pct:l.length?done/l.length:0}}
+const state=d=>{const p=prog(key(d));return p.total&&p.done===p.total?"gold":p.any?"part":"none"};
+function render(){
+const k=key(sel),p=prog(k),isT=k===key(TODAY),R=44,C=2*Math.PI*R;
+const start=new Date(sel);start.setDate(sel.getDate()-sel.getDay());
+let strip="",wk=0;
+for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const s=state(d);if(s==="gold")wk++;
+const col=s==="gold"?"#d4a017":s==="part"?"#10b981":"#9ca3af66";const on=key(d)===k;
+strip+=`<button data-day="${key(d)}" class="flex-1 py-2 rounded-2xl flex flex-col items-center gap-1 ${on?'text-white':''}" style="${on?'background:#047857':''}"><span class="text-[11px] ${on?'':'mut'}">${d.toLocaleDateString("en",{weekday:"short"})}</span><span class="font-semibold">${d.getDate()}</span><span class="w-1.5 h-1.5 rounded-full" style="background:${col}"></span></button>`}
+let mon=0;const dim=new Date(sel.getFullYear(),sel.getMonth()+1,0).getDate();
+for(let i=1;i<=dim;i++){if(state(new Date(sel.getFullYear(),sel.getMonth(),i))==="gold")mon++}
+const meters=S.map(([id,n,sub,ic])=>{const q=prog(k,id);return`<div class="flex-1 text-center"><div class="text-lg">${ic}</div><div class="text-xs font-semibold">${n}</div><div class="h-1.5 rounded-full mt-1.5 overflow-hidden" style="background:var(--ln)"><div class="h-full rounded-full" style="width:${q.pct*100}%;background:${q.pct===1?'#d4a017':'var(--g)'}"></div></div><div class="text-[11px] mut mt-1">${q.done}/${q.total}</div></div>`}).join("");
+const seg=S.map(([id,n,,ic])=>`<button data-tab="${id}" class="flex-1 py-2 rounded-xl text-sm font-semibold ${tab===id?'text-white':'mut'}" style="${tab===id?'background:#047857':''}">${ic} ${n}</button>`).join("");
+const cards=all().filter(d=>d.s===tab).map(d=>{const c=cnt(k,d.id),done=c>=d.n,o=open[d.id];
+return`<div class="card p-4 mb-3 ${done?'ring-2':''}" style="${done?'--tw-ring-color:#d4a017':''}">
+<div class="flex items-center justify-between gap-2 mb-2"><div class="font-semibold text-sm">${esc(d.t)}</div><span class="text-xs px-2.5 py-1 rounded-full text-white shrink-0" style="background:#047857">${d.n}×</span></div>
+<div class="font-arabic">${esc(d.ar)}</div>
+${st.tr&&d.tr?`<p class="text-sm italic mut mt-2">${esc(d.tr)}</p>`:""}
+${d.en?`<p class="text-sm mut mt-2 ${o?'':'line-clamp-2'}" data-more="${d.id}">${esc(d.en)}</p>`:""}
+<div class="flex items-center gap-3 mt-3">
+<button data-chk="${d.id}" aria-label="Mark complete" class="w-12 h-12 rounded-2xl border-2 flex items-center justify-center text-xl" style="border-color:${done?'#d4a017':'var(--ln)'};background:${done?'#d4a017':'transparent'};color:${done?'#fff':'transparent'}">✓</button>
+<button data-tap="${d.id}" class="flex-1 h-12 rounded-2xl text-white font-bold text-lg backdrop-blur-md" style="background:${done?'#d4a017':'#047857'}">${done?'Done · '+c:c+' / '+d.n}</button>
+${d.cu?`<button data-del="${d.id}" class="w-12 h-12 mut" aria-label="Delete">🗑</button>`:""}
+</div></div>`}).join("")||`<p class="mut text-center py-8">No duas here yet.</p>`;
+document.getElementById("app").innerHTML=`
+<div class="flex items-center justify-between mb-3"><div><div class="text-xs mut">${isT?"Today":"Selected"}</div><h1 class="text-xl font-bold">${sel.toLocaleDateString("en",{weekday:"long",month:"long",day:"numeric"})}</h1></div>
+${isT?"":`<button data-today class="text-sm font-semibold px-3 py-2 rounded-full text-white" style="background:#047857">Today</button>`}</div>
+<div class="card p-1.5 flex mb-3">${strip}</div>
+<div class="card p-4 mb-3"><div class="flex items-center gap-4"><div class="relative w-28 h-28 shrink-0"><svg viewBox="0 0 100 100" class="w-full h-full -rotate-90"><circle cx="50" cy="50" r="${R}" fill="none" stroke="var(--ln)" stroke-width="9"/><circle class="ring" cx="50" cy="50" r="${R}" fill="none" stroke="${p.pct===1?'#d4a017':'#10b981'}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p.pct)}"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-2xl font-bold">${Math.round(p.pct*100)}%</span><span class="text-[11px] mut">${p.done}/${p.total}</span></div></div><div class="flex-1 flex gap-2">${meters}</div></div>
+<div class="flex mt-4 pt-3 border-t text-center" style="border-color:var(--ln)"><div class="flex-1"><div class="font-bold">${wk}/7</div><div class="text-[11px] mut">Days done this week</div></div><div class="flex-1"><div class="font-bold">${mon}</div><div class="text-[11px] mut">Complete days this month</div></div></div></div>
+<div class="card p-1.5 flex mb-3">${seg}</div>
+<div class="flex items-center justify-between mb-2 px-1"><button data-tr class="text-sm mut">${st.tr?"☑":"☐"} Transliteration</button></div>
+${cards}
+<button id="add" class="fixed right-5 w-14 h-14 rounded-full text-white text-3xl shadow-xl backdrop-blur-md z-30" style="background:#047857;bottom:calc(env(safe-area-inset-bottom,0px) + 20px)" aria-label="Add dua">+</button>`}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function setC(id,v){const k=key(sel);(st.logs[k]=st.logs[k]||{})[id]=v;save();render()}
+document.getElementById("app").addEventListener("click",e=>{
+const t=e.target.closest("button,[data-more]");if(!t)return;const D_=t.dataset;
+if(D_.day){const[y,m,d]=D_.day.split("-");sel=new Date(+y,+m-1,+d)}
+else if(D_.tab!==undefined)tab=D_.tab;
+else if(D_.today!==undefined)sel=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate());
+else if(D_.tr!==undefined){st.tr=!st.tr;save()}
+else if(D_.more){open[D_.more]=!open[D_.more]}
+else if(D_.tap){const d=all().find(x=>x.id===D_.tap),c=cnt(key(sel),d.id);if(navigator.vibrate)navigator.vibrate(8);return setC(d.id,c>=d.n&&c>0?0:c+1)}
+else if(D_.chk){const d=all().find(x=>x.id===D_.chk);return setC(d.id,cnt(key(sel),d.id)>=d.n?0:d.n)}
+else if(D_.del){if(confirm("Delete this dua?")){st.custom=st.custom.filter(x=>x.id!==D_.del);save()}}
+else if(t.id==="add")return sheet(true);
+else return;
+render()});
+const sh=document.getElementById("sheet"),sc=document.getElementById("scrim");
+function sheet(o){sh.classList.toggle("open",o);sc.classList.toggle("hidden",!o);if(o)document.getElementById("f-sess").value=tab}
+sc.onclick=document.getElementById("x").onclick=()=>sheet(false);
+document.getElementById("save").onclick=()=>{
+const g=i=>document.getElementById(i).value.trim(),t=g("f-title"),ar=g("f-ar");
+if(!t||!ar){alert("Please enter a title and the Arabic text.");return}
+const s=g("f-sess");st.custom.push({id:"c"+Date.now(),s,t,ar,en:g("f-en"),tr:"",n:Math.max(1,parseInt(g("f-n"))||1),cu:true});save();
+["f-title","f-ar","f-en"].forEach(i=>document.getElementById(i).value="");document.getElementById("f-n").value=1;tab=s;sheet(false);render()};
+render();
+</script>
+<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))</script>
+</body>
+</html>
